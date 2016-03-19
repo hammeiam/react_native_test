@@ -7,6 +7,7 @@ import React, {
   AppRegistry,
   Component,
   Image,
+  ListView,
   StyleSheet,
   Text,
   View
@@ -22,7 +23,10 @@ class ReactNativeTest extends Component {
   constructor(props){
     super(props)
     this.state = {
-      movies: null
+      dataSource: new ListView.DataSource({
+        rowHasChanged: (row1, row2) => row1 !== row2
+      }),
+      loaded: false
     }
   }
 
@@ -31,23 +35,30 @@ class ReactNativeTest extends Component {
   }
 
   fetchData(){
+    console.log('fetching...')
     fetch(REQUEST_URL)
       .then((res) => res.json())
       .then((resJson) => {
         this.setState({
-          movies: resJson.movies
+          dataSource: this.state.dataSource.cloneWithRows(resJson.movies),
+          loaded: true
         })
       })
       .done()
   }
 
   render() {
-    if(!this.state.movies){
+    if(!this.state.loaded){
       return this.renderLoadingView()
     }
 
-    let movie = MOCKED_MOVIES_DATA[0]
-    return this.renderMovie(movie)
+    return (
+      <ListView
+        dataSource={this.state.dataSource}
+        renderRow={this.renderMovie}
+        style={styles.listView}
+      />
+    )
   }
 
   renderLoadingView(){
@@ -83,6 +94,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
+  },
+  listView: {
+    paddingTop: 20,
+    backgroundColor: '#F5FCFF'
   },
   thumbnail: {
     width: 53,
